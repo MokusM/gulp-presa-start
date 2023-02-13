@@ -36,7 +36,7 @@ const paths = {
 	buildFontsFolder: `${buildFolder}/shared/fonts`,
 };
 
-let isProd = true; // dev by default
+let isProd = false; // dev by default
 
 const clean = () => {
 	return del([buildFolder]);

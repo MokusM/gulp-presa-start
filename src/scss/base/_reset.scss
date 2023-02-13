@@ -106,9 +106,9 @@ p {
 
 body {
 	line-height: 1;
-	font-family: 'FuturaPT', sans-serif;
+	font-family: var(--font-family);
 	font-weight: 400;
-	color: #000;
+	color: var(--text-color);
 	-webkit-text-size-adjust: none;
 	-moz-text-size-adjust: none;
 	-ms-text-size-adjust: none;
@@ -152,6 +152,9 @@ b,
 strong,
 .bold {
 	font-weight: 700;
+}
+i {
+	font-style: italic;
 }
 sup {
 	font-size: 60%;

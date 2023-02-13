@@ -1,4 +1,8 @@
 <ul class="menu-list">
-	<li class="menu-list__item"><a href="#" class="menu-list__link" id="menu1">menu1</a></li>
-	<li class="menu-list__item"><a href="#" class="menu-list__link" id="menu2">menu2</a></li>
+	<li class="menu-list__item @@if (context.slide === '1') {active}">
+		<a href="#" class="menu-list__link" id="menu1">menu1</a>
+	</li>
+	<li class="menu-list__item @@if (context.slide === '2') {active}">
+		<a href="#" class="menu-list__link" id="menu2">menu2</a>
+	</li>
 </ul>

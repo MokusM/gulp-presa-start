@@ -1,33 +1,9 @@
-.normal {
-	font-weight: 400;
-}
-.light {
-	font-weight: 300;
-}
-i {
-	font-style: italic;
-}
-.center {
-	text-align: center;
-}
-.orange {
-	color: #f29f77;
-}
-.white {
-	color: #fff;
-}
-.bg-orange {
-	background-color: #f29f77;
-}
-.bg-grey {
-	background-color: #e7e6e6;
-}
 .wrapper {
 	position: relative;
 	width: 1024px;
 	height: 768px;
 	margin: auto;
-	background-color: #ffffff;
+	background-color: var(--base-bg);
 	overflow: hidden;
 }
 .slide {
@@ -39,5 +15,5 @@ i {
 	width: 100%;
 	height: 100%;
 	overflow: hidden;
-	background-color: #ffffff;
+	background-color: var(--slide-bg);
 }

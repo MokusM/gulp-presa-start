@@ -1,0 +1,15 @@
+// Base Style
+@import 'utils/_vars';
+@import 'utils/_mixins';
+@import 'base/_fonts';
+@import 'base/_reset';
+@import 'utils/_settings';
+
+//Components
+@import './components/menu';
+@import './components/warning';
+@import './components/warning-first-screen';
+//@import './components/slider';
+
+//Slides
+@import './slides/slide-1';

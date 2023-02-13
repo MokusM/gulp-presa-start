@@ -15,6 +15,8 @@ const image = require('gulp-imagemin');
 const { readFileSync } = require('fs');
 const mainSass = gulpSass(sass);
 const plumber = require('gulp-plumber');
+const puppeteer = require('puppeteer');
+const tap = require('gulp-tap');
 const path = require('path');
 const zip = require('gulp-zip');
 const rootFolder = path.basename(path.resolve());
@@ -165,6 +167,24 @@ const zipFiles = (done) => {
 		.pipe(dest(buildFolder));
 };
 
+const screen = () => {
+	return src(['./app/*.html']).pipe(
+		tap(async (file) => {
+			const browser = await puppeteer.launch({ headless: true });
+			const page = await browser.newPage();
+			await page.setViewport({
+				width: 1024,
+				height: 768,
+				deviceScaleFactor: 1,
+			});
+
+			await page.goto('file://' + file.path);
+			await page.screenshot({ path: './app/' + path.basename(file.basename, '.html') + '.png' });
+			await browser.close();
+		})
+	);
+};
+
 const toProd = (done) => {
 	isProd = true;
 	done();
@@ -172,7 +192,7 @@ const toProd = (done) => {
 
 exports.default = series(clean, htmlInclude, customScripts, styles, resources, images, watchFiles);
 
-exports.build = series(toProd, clean, htmlInclude, customScripts, resources, styles, images);
+exports.build = series(toProd, clean, htmlInclude, customScripts, resources, styles, images, screen);
 
 exports.cache = series(cache, rewrite);
 

@@ -18,11 +18,16 @@ const plumber = require('gulp-plumber');
 const puppeteer = require('puppeteer');
 const tap = require('gulp-tap');
 const path = require('path');
+const merge = require('merge-stream');
+const globby = require('globby');
 const zip = require('gulp-zip');
+const fs = require('fs');
 const rootFolder = path.basename(path.resolve());
 
 // paths
-const projectName = 'Capital_Soleil_Fluid';
+const projectName = 'UA_Capital_Soleil_Fluid';
+const slidesCount = ['./app/S1_UA_Capital_Soleil_Fluid', './app/S2_UA_Capital_Soleil_Fluid', './app/S3_UA_Capital_Soleil_Fluid'];
+
 const srcFolder = './src';
 const buildFolder = './app';
 const paths = {
@@ -152,20 +157,73 @@ const rewrite = () => {
 		.pipe(dest(buildFolder));
 };
 
-const zipFiles = (done) => {
+// const zipFiles = (done) => {
+// 	del.sync([`${buildFolder}/*.zip`]);
+// 	return src(`./app/shared/**/*.*`, {})
+// 		.pipe(
+// 			plumber(
+// 				notify.onError({
+// 					title: 'ZIP',
+// 					message: 'Error: <%= error.message %>',
+// 				})
+// 			)
+// 		)
+// 		.pipe(zip(`SHARED_UA_${projectName}.zip`))
+// 		.pipe(dest(buildFolder));
+// };
+
+const zipFiles = () => {
 	del.sync([`${buildFolder}/*.zip`]);
-	return src(`./app/shared/**/*.*`, {})
-		.pipe(
-			plumber(
-				notify.onError({
-					title: 'ZIP',
-					message: 'Error: <%= error.message %>',
-				})
-			)
-		)
-		.pipe(zip(`SHARED_UA_${projectName}.zip`))
-		.pipe(dest(buildFolder));
+	return src(`./app/shared/**/*.*`, {}).map((dir) => console.log(dir));
+	// return merge(
+	// 	(async () => {
+	// 		const SRC = await globby.sync(['./app/shared/*']).map(
+	// 			(dir) => console.log(dir)
+	// 			// src(path.join(dir, '**/*'))
+	// 			// 	.pipe(zip(`SHARED_UA_${projectName}.zip`))
+	// 			// 	.pipe(dest('app/zip'))
+	// 		);
+	// 		console.log(SRC);
+	// 		//=> ['cat.png', 'unicorn.png', 'cow.jpg', 'rainbow.jpg']
+	// 	})()
+
+	// src(`./app/shared/**/*.*`, {})
+	// 	.pipe(
+	// 		plumber(
+	// 			notify.onError({
+	// 				title: 'ZIP',
+	// 				message: 'Error: <%= error.message %>',
+	// 			})
+	// 		)
+	// 	)
+	// 	.pipe(zip(`S1_UA_${projectName}.zip`))
+	// 	.pipe(dest(buildFolder)),
+	// src(`./app/shared/images/*.*`, {})
+	// 	.pipe(
+	// 		plumber(
+	// 			notify.onError({
+	// 				title: 'ZIP',
+	// 				message: 'Error: <%= error.message %>',
+	// 			})
+	// 		)
+	// 	)
+	// 	.pipe(zip(`SHARED_UA_${projectName}.zip`))
+	// 	.pipe(dest(buildFolder))
+	//);
 };
+
+// const folders = () => {
+// 	return src(['./app/*.html']).pipe(
+// 		tap(async (file) => {
+// 			if (!fs.existsSync(file.basename)) {
+// 				const slideNumber = file.basename.slice(6, 7);
+// 				const slFolder = './app/' + 'S' + slideNumber + '_' + projectName;
+// 				fs.mkdirSync(slFolder);
+// 				console.log('📁 folder created:', slFolder);
+// 			}
+// 		})
+// 	);
+// };
 
 const screen = () => {
 	return src(['./app/*.html']).pipe(
@@ -179,7 +237,7 @@ const screen = () => {
 			});
 
 			await page.goto('file://' + file.path);
-			await page.screenshot({ path: './app/' + path.basename(file.basename, '.html') + '.png' });
+			await page.screenshot({ path: './app/thumb-' + file.basename.slice(6, 7) + '.png' });
 			await browser.close();
 		})
 	);

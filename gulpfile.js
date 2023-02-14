@@ -26,7 +26,6 @@ const rootFolder = path.basename(path.resolve());
 
 // paths
 const projectName = 'UA_Capital_Soleil_Fluid';
-const slidesCount = ['./app/S1_UA_Capital_Soleil_Fluid', './app/S2_UA_Capital_Soleil_Fluid', './app/S3_UA_Capital_Soleil_Fluid'];
 
 const srcFolder = './src';
 const buildFolder = './app';
@@ -172,58 +171,42 @@ const rewrite = () => {
 // 		.pipe(dest(buildFolder));
 // };
 
-const zipFiles = () => {
+const zipFiles = (done) => {
 	del.sync([`${buildFolder}/*.zip`]);
-	return src(`./app/shared/**/*.*`, {}).map((dir) => console.log(dir));
-	// return merge(
-	// 	(async () => {
-	// 		const SRC = await globby.sync(['./app/shared/*']).map(
-	// 			(dir) => console.log(dir)
-	// 			// src(path.join(dir, '**/*'))
-	// 			// 	.pipe(zip(`SHARED_UA_${projectName}.zip`))
-	// 			// 	.pipe(dest('app/zip'))
-	// 		);
-	// 		console.log(SRC);
-	// 		//=> ['cat.png', 'unicorn.png', 'cow.jpg', 'rainbow.jpg']
-	// 	})()
+	// merge(
+	// 	globby.sync(['./app/**']).map((dir) =>
+	// 		src(path.join(dir, '**/*'), {})
+	// 			.pipe(zip(`SHARED_UA_${dir}.zip`))
+	// 			.pipe(dest(buildFolder))
+	// 	)
+	// );
 
-	// src(`./app/shared/**/*.*`, {})
-	// 	.pipe(
-	// 		plumber(
-	// 			notify.onError({
-	// 				title: 'ZIP',
-	// 				message: 'Error: <%= error.message %>',
-	// 			})
-	// 		)
-	// 	)
-	// 	.pipe(zip(`S1_UA_${projectName}.zip`))
-	// 	.pipe(dest(buildFolder)),
-	// src(`./app/shared/images/*.*`, {})
-	// 	.pipe(
-	// 		plumber(
-	// 			notify.onError({
-	// 				title: 'ZIP',
-	// 				message: 'Error: <%= error.message %>',
-	// 			})
-	// 		)
-	// 	)
-	// 	.pipe(zip(`SHARED_UA_${projectName}.zip`))
-	// 	.pipe(dest(buildFolder))
-	//);
+	src(`./app/shared/**/*.*`, {})
+		.pipe(
+			plumber(
+				notify.onError({
+					title: 'ZIP',
+					message: 'Error: <%= error.message %>',
+				})
+			)
+		)
+		.pipe(zip(`SHARED_UA_${projectName}.zip`))
+		.pipe(dest(buildFolder));
+
+	done();
 };
 
-// const folders = () => {
-// 	return src(['./app/*.html']).pipe(
-// 		tap(async (file) => {
-// 			if (!fs.existsSync(file.basename)) {
-// 				const slideNumber = file.basename.slice(6, 7);
-// 				const slFolder = './app/' + 'S' + slideNumber + '_' + projectName;
-// 				fs.mkdirSync(slFolder);
-// 				console.log('📁 folder created:', slFolder);
-// 			}
-// 		})
-// 	);
-// };
+const folders = () => {
+	return src(['./app/*.html']).pipe(
+		tap(async (file) => {
+			if (!fs.existsSync(file.basename)) {
+				const slideNumber = file.basename.slice(6, 7);
+				const slFolder = './app/' + 'S' + slideNumber + '_' + projectName;
+				fs.mkdirSync(slFolder);
+			}
+		})
+	);
+};
 
 const screen = () => {
 	return src(['./app/*.html']).pipe(
@@ -250,7 +233,7 @@ const toProd = (done) => {
 
 exports.default = series(clean, htmlInclude, customScripts, styles, resources, images, watchFiles);
 
-exports.build = series(toProd, clean, htmlInclude, customScripts, resources, styles, images, screen);
+exports.build = series(toProd, clean, htmlInclude, customScripts, resources, styles, images, screen, folders);
 
 exports.cache = series(cache, rewrite);
 

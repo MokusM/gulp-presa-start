@@ -9,9 +9,19 @@ $(document).ready(function () {
 		com.veeva.clm.gotoSlide(slide);
 	}
 
+	function naviteTo(slide) {
+		if (window.navigator.platform === 'Win32') window.location = `index-${slide}.html`;
+		else goToSlide(`S${slide}_UA_CERAVE_Senile_Xerosis.zip`);
+	}
+
 	// main menu
 	$('#menu1').click(function () {
-		goToSlide('S2_UA_CERAVE_Senile_Xerosis.zip');
+		naviteTo(1);
+		//goToSlide('S2_UA_CERAVE_Senile_Xerosis.zip');
+	});
+
+	$('#menu2').click(function () {
+		naviteTo(2);
 	});
 
 	// slide2

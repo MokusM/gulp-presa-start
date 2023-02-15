@@ -6,9 +6,6 @@ const browserSync = require('browser-sync').create();
 const sass = require('sass');
 const gulpSass = require('gulp-sass');
 const fileInclude = require('gulp-file-include');
-const rev = require('gulp-rev');
-const revRewrite = require('gulp-rev-rewrite');
-const revDel = require('gulp-rev-delete-original');
 const gulpif = require('gulp-if');
 const notify = require('gulp-notify');
 const image = require('gulp-imagemin');
@@ -19,10 +16,8 @@ const puppeteer = require('puppeteer');
 const tap = require('gulp-tap');
 const path = require('path');
 const merge = require('merge-stream');
-const globby = require('globby');
 const zip = require('gulp-zip');
 const fs = require('fs');
-const rootFolder = path.basename(path.resolve());
 
 // paths
 const projectName = 'UA_Capital_Soleil_Fluid';
@@ -127,72 +122,30 @@ const watchFiles = () => {
 	watch(`${paths.srcImgFolder}/**/**.{jpg,jpeg,png,svg}`, images);
 };
 
-const cache = () => {
-	return src(`${buildFolder}/**/*.{css,js,svg,png,jpg,jpeg,webp,woff2}`, {
-		base: buildFolder,
-	})
-		.pipe(rev())
-		.pipe(revDel())
-		.pipe(dest(buildFolder))
-		.pipe(rev.manifest('rev.json'))
-		.pipe(dest(buildFolder));
-};
-
-const rewrite = () => {
-	const manifest = readFileSync('app/rev.json');
-	src(`${paths.buildCssFolder}/*.css`)
-		.pipe(
-			revRewrite({
-				manifest,
-			})
-		)
-		.pipe(dest(paths.buildCssFolder));
-	return src(`${buildFolder}/**/*.html`)
-		.pipe(
-			revRewrite({
-				manifest,
-			})
-		)
-		.pipe(dest(buildFolder));
-};
-
-// const zipFiles = (done) => {
-// 	del.sync([`${buildFolder}/*.zip`]);
-// 	return src(`./app/shared/**/*.*`, {})
-// 		.pipe(
-// 			plumber(
-// 				notify.onError({
-// 					title: 'ZIP',
-// 					message: 'Error: <%= error.message %>',
-// 				})
-// 			)
-// 		)
-// 		.pipe(zip(`SHARED_UA_${projectName}.zip`))
-// 		.pipe(dest(buildFolder));
-// };
+function getFolders(dir) {
+	return fs.readdirSync(dir).filter(function (file) {
+		return fs.statSync(path.join(dir, file)).isDirectory();
+	});
+}
 
 const zipFiles = (done) => {
 	del.sync([`${buildFolder}/*.zip`]);
-	// merge(
-	// 	globby.sync(['./app/**']).map((dir) =>
-	// 		src(path.join(dir, '**/*'), {})
-	// 			.pipe(zip(`SHARED_UA_${dir}.zip`))
-	// 			.pipe(dest(buildFolder))
-	// 	)
-	// );
+	var folders = getFolders(buildFolder);
 
-	src(`./app/shared/**/*.*`, {})
-		.pipe(
-			plumber(
-				notify.onError({
-					title: 'ZIP',
-					message: 'Error: <%= error.message %>',
-				})
+	var tasks = folders.map(function (folder) {
+		return src(`./app/${folder}/**/*.*`, {})
+			.pipe(
+				plumber(
+					notify.onError({
+						title: 'ZIP',
+						message: 'Error: <%= error.message %>',
+					})
+				)
 			)
-		)
-		.pipe(zip(`SHARED_UA_${projectName}.zip`))
-		.pipe(dest(buildFolder));
-
+			.pipe(zip(`${folder.toUpperCase()}_${projectName}.zip`))
+			.pipe(dest(buildFolder));
+	});
+	merge(tasks);
 	done();
 };
 
@@ -201,9 +154,20 @@ const folders = () => {
 		tap(async (file) => {
 			if (!fs.existsSync(file.basename)) {
 				const slideNumber = file.basename.slice(6, 7);
-				const slFolder = './app/' + 'S' + slideNumber + '_' + projectName;
+				const slFolder = './app/' + 'S' + slideNumber;
 				fs.mkdirSync(slFolder);
 			}
+		})
+	);
+};
+
+const buildHtml = () => {
+	return src('./app/*.html').pipe(
+		dest(function (file) {
+			const slideNumber = file.basename.slice(6, 7);
+			const slFolder = './app/' + 'S' + slideNumber;
+			file.basename = 'index.html';
+			return slFolder;
 		})
 	);
 };
@@ -220,7 +184,7 @@ const screen = () => {
 			});
 
 			await page.goto('file://' + file.path);
-			await page.screenshot({ path: './app/thumb-' + file.basename.slice(6, 7) + '.png' });
+			await page.screenshot({ path: './app/S' + file.basename.slice(6, 7) + '/thumb.png' });
 			await browser.close();
 		})
 	);
@@ -233,8 +197,6 @@ const toProd = (done) => {
 
 exports.default = series(clean, htmlInclude, customScripts, styles, resources, images, watchFiles);
 
-exports.build = series(toProd, clean, htmlInclude, customScripts, resources, styles, images, screen, folders);
-
-exports.cache = series(cache, rewrite);
+exports.build = series(toProd, clean, htmlInclude, customScripts, resources, styles, images, screen, folders, buildHtml);
 
 exports.zip = zipFiles;

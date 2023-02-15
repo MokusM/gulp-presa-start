@@ -172,6 +172,10 @@ const buildHtml = () => {
 	);
 };
 
+async function timeout(ms) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 const screen = () => {
 	return src(['./app/*.html']).pipe(
 		tap(async (file) => {
@@ -183,7 +187,8 @@ const screen = () => {
 				deviceScaleFactor: 1,
 			});
 
-			await page.goto('file://' + file.path);
+			await page.goto('file://' + file.path, { waitUntil: 'networkidle2' });
+			await timeout(5000);
 			await page.screenshot({ path: './app/S' + file.basename.slice(6, 7) + '/thumb.png' });
 			await browser.close();
 		})

@@ -1,0 +1,98 @@
+@keyframes fadeIn {
+	0% {
+		opacity: 0;
+		animation-timing-function: ease-in;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+@keyframes bounceIn {
+	from,
+	20%,
+	40%,
+	60%,
+	80%,
+	to {
+		animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+	}
+
+	0% {
+		opacity: 0;
+		transform: scale3d(0.3, 0.3, 0.3);
+	}
+
+	20% {
+		transform: scale3d(1.1, 1.1, 1.1);
+	}
+
+	40% {
+		transform: scale3d(0.9, 0.9, 0.9);
+	}
+
+	60% {
+		opacity: 1;
+		transform: scale3d(1.03, 1.03, 1.03);
+	}
+
+	80% {
+		transform: scale3d(0.97, 0.97, 0.97);
+	}
+
+	to {
+		opacity: 1;
+		transform: scale3d(1, 1, 1);
+	}
+}
+
+@keyframes slideInLeft {
+	from {
+		transform: translate3d(-100%, 0, 0);
+		visibility: visible;
+	}
+
+	to {
+		transform: translate3d(0, 0, 0);
+	}
+}
+
+@keyframes slideInRight {
+	from {
+		transform: translate3d(100%, 0, 0);
+		visibility: visible;
+	}
+
+	to {
+		transform: translate3d(0, 0, 0);
+	}
+}
+
+.fadeIn {
+	opacity: 0;
+	animation: 0.5s ease-in 0s 1 forwards fadeIn;
+}
+
+.bounceIn {
+	animation: 0.5s ease-in 0s 1 forwards bounceIn;
+}
+
+.slideInLeft {
+	animation: 0.5s ease-in 0s 1 forwards slideInLeft;
+}
+
+.slideInRight {
+	animation: 0.5s ease-in 0s 1 forwards slideInRight;
+}
+
+@for $i from 1 to 20 {
+	.delay-#{$i} {
+		animation-delay: $i * 0.4s;
+	}
+}
+
+@for $i from 1 to 20 {
+	.duration-#{$i} {
+		animation-duration: $i * 0.4s;
+	}
+}

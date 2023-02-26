@@ -6,6 +6,9 @@ const browserSync = require('browser-sync').create();
 const sass = require('sass');
 const gulpSass = require('gulp-sass');
 const fileInclude = require('gulp-file-include');
+const rev = require('gulp-rev');
+const revRewrite = require('gulp-rev-rewrite');
+const revDel = require('gulp-rev-delete-original');
 const gulpif = require('gulp-if');
 const notify = require('gulp-notify');
 const image = require('gulp-imagemin');
@@ -20,7 +23,7 @@ const zip = require('gulp-zip');
 const fs = require('fs');
 
 // paths
-const projectName = 'UA_Capital_Soleil_Fluid';
+const projectName = 'UA_LRP_Anthelios_Correct_Aestet';
 
 const srcFolder = './src';
 const buildFolder = './app';
@@ -76,22 +79,24 @@ const resources = () => {
 };
 
 const images = () => {
-	return src([`${paths.srcImgFolder}/**/**.{jpg,jpeg,png,svg}`])
-		.pipe(
-			gulpif(
-				isProd,
-				image([
-					image.mozjpeg({
-						quality: 80,
-						progressive: true,
-					}),
-					image.optipng({
-						optimizationLevel: 2,
-					}),
-				])
-			)
-		)
-		.pipe(dest(paths.buildImgFolder));
+	return (
+		src([`${paths.srcImgFolder}/**/**.{jpg,jpeg,png,svg}`])
+			// .pipe(
+			// 	gulpif(
+			// 		isProd,
+			// 		image([
+			// 			image.mozjpeg({
+			// 				quality: 80,
+			// 				progressive: true,
+			// 			}),
+			// 			image.optipng({
+			// 				optimizationLevel: 2,
+			// 			}),
+			// 		])
+			// 	)
+			// )
+			.pipe(dest(paths.buildImgFolder))
+	);
 };
 
 const htmlInclude = () => {
@@ -150,11 +155,12 @@ const zipFiles = (done) => {
 };
 
 const folders = () => {
-	return src(['./app/*.html']).pipe(
+	var slideCount = 0;
+	return src('./app/*.html').pipe(
 		tap(async (file) => {
+			slideCount++;
 			if (!fs.existsSync(file.basename)) {
-				const slideNumber = file.basename.slice(6, 7);
-				const slFolder = './app/' + 'S' + slideNumber;
+				const slFolder = './app/' + 'S' + slideCount;
 				fs.mkdirSync(slFolder);
 			}
 		})
@@ -162,9 +168,11 @@ const folders = () => {
 };
 
 const buildHtml = () => {
+	var slideCount = 0;
 	return src('./app/*.html').pipe(
 		dest(function (file) {
-			const slideNumber = file.basename.slice(6, 7);
+			slideCount++;
+			const slideNumber = file.basename.replace(/\D/g, '');
 			const slFolder = './app/' + 'S' + slideNumber;
 			file.basename = 'index.html';
 			return slFolder;
@@ -179,18 +187,25 @@ async function timeout(ms) {
 const screen = () => {
 	return src(['./app/*.html']).pipe(
 		tap(async (file) => {
-			const browser = await puppeteer.launch({ headless: true });
-			const page = await browser.newPage();
-			await page.setViewport({
-				width: 1024,
-				height: 768,
-				deviceScaleFactor: 1,
-			});
-
-			await page.goto('file://' + file.path, { waitUntil: 'networkidle2' });
-			await timeout(5000);
-			await page.screenshot({ path: './app/S' + file.basename.slice(6, 7) + '/thumb.png' });
-			await browser.close();
+			let browser;
+			try {
+				browser = await puppeteer.launch({ headless: true });
+				const page = await browser.newPage();
+				await page.setViewport({
+					width: 1024,
+					height: 768,
+					deviceScaleFactor: 1,
+				});
+				await page.goto('file://' + file.path, { waitUntil: 'networkidle2' });
+				await timeout(5000);
+				await page.screenshot({ path: './app/S' + file.basename.slice(6, 7) + '/thumb.png' });
+			} catch (err) {
+				console.log(err.message);
+			} finally {
+				if (browser) {
+					browser.close();
+				}
+			}
 		})
 	);
 };
@@ -200,8 +215,39 @@ const toProd = (done) => {
 	done();
 };
 
+const cache = () => {
+	return src(`${buildFolder}/**/*.{css,js,svg,png,jpg,jpeg,webp,woff2}`, {
+		base: buildFolder,
+	})
+		.pipe(rev())
+		.pipe(revDel())
+		.pipe(dest(buildFolder))
+		.pipe(rev.manifest('rev.json'))
+		.pipe(dest(buildFolder));
+};
+
+const rewrite = () => {
+	const manifest = readFileSync('app/rev.json');
+	src(`${paths.buildCssFolder}/*.css`)
+		.pipe(
+			revRewrite({
+				manifest,
+			})
+		)
+		.pipe(dest(paths.buildCssFolder));
+	return src(`${buildFolder}/**/*.html`)
+		.pipe(
+			revRewrite({
+				manifest,
+			})
+		)
+		.pipe(dest(buildFolder));
+};
+
 exports.default = series(clean, htmlInclude, customScripts, styles, resources, images, watchFiles);
 
 exports.build = series(toProd, clean, htmlInclude, customScripts, resources, styles, images, screen, folders, buildHtml);
+
+exports.cache = series(cache, rewrite);
 
 exports.zip = zipFiles;

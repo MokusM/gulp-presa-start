@@ -168,10 +168,8 @@ const folders = () => {
 };
 
 const buildHtml = () => {
-	var slideCount = 0;
 	return src('./app/*.html').pipe(
 		dest(function (file) {
-			slideCount++;
 			const slideNumber = file.basename.replace(/\D/g, '');
 			const slFolder = './app/' + 'S' + slideNumber;
 			file.basename = 'index.html';
@@ -187,25 +185,17 @@ async function timeout(ms) {
 const screen = () => {
 	return src(['./app/*.html']).pipe(
 		tap(async (file) => {
-			let browser;
-			try {
-				browser = await puppeteer.launch({ headless: true });
-				const page = await browser.newPage();
-				await page.setViewport({
-					width: 1024,
-					height: 768,
-					deviceScaleFactor: 1,
-				});
-				await page.goto('file://' + file.path, { waitUntil: 'networkidle2' });
-				await timeout(5000);
-				await page.screenshot({ path: './app/S' + file.basename.slice(6, 7) + '/thumb.png' });
-			} catch (err) {
-				console.log(err.message);
-			} finally {
-				if (browser) {
-					browser.close();
-				}
-			}
+			const browser = await puppeteer.launch({ headless: true });
+			const page = await browser.newPage();
+			await page.setViewport({
+				width: 1024,
+				height: 768,
+				deviceScaleFactor: 1,
+			});
+			await page.goto('file://' + file.path);
+			await timeout(5000);
+			await page.screenshot({ path: './app/S' + file.basename.replace(/\D/g, '') + '/thumb.png' });
+			await browser.close();
 		})
 	);
 };
